@@ -551,14 +551,14 @@ body {
 <!-- HEADER -->
 <div class="header">
     <div class="header-logo">
-        <img src="logo-nali.jpg" alt="Nali Eggui"
+        <img src="logo-nali.jpg" alt="Logo"
              style="width:42px;height:42px;border-radius:50%;object-fit:cover;
                     background:var(--arena);border:2px solid rgba(255,255,255,0.3);"
              onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
         <div class="header-icon" style="display:none;">🌿</div>
         <div>
-            <div class="header-titulo">Nali Eggui</div>
-            <div class="header-sub">Artesanía & Diseño</div>
+            <div class="header-titulo" id="headerTitulo">Cargando...</div>
+            <div class="header-sub" id="headerSub">Punto de Venta</div>
         </div>
     </div>
     <div class="header-right">
@@ -815,6 +815,23 @@ const API_URL  = 'https://script.google.com/macros/s/AKfycby9UoS5VbPEroBBrFdFMja
 const PREFIJO = new URLSearchParams(window.location.search).get("p")?.toUpperCase() || "NE";
 const HOY_KEY    = 'nalieggui_ventas_' + new Date().toISOString().slice(0, 10);
 const CARRITO_KEY= 'nalieggui_carrito';
+
+// Título provisional
+document.getElementById('headerTitulo').textContent = PREFIJO;
+document.title = PREFIJO + ' · Punto de Venta';
+
+// Cargar nombre real del vendedor
+fetch(API_URL + '?action=getVendedores', { redirect:'follow' })
+    .then(r => r.json())
+    .then(data => {
+        const v = (data.vendedores || []).find(v => v.prefijo === PREFIJO);
+        if (v) {
+            document.getElementById('headerTitulo').textContent = v.nombre;
+            document.getElementById('headerSub').textContent = v.categoria || 'Punto de Venta';
+            document.title = v.nombre + ' · Punto de Venta';
+        }
+    }).catch(() => {});
+
 
 // ========== ESTADO ==========
 let productos = [];
@@ -1126,7 +1143,7 @@ function enviarTicketWA() {
         var nombre = i.name.length > 28 ? i.name.substring(0,28)+'...' : i.name;
         return i.qty+'x '+nombre+' $'+(i.price*i.qty).toLocaleString('es-AR');
     }).join('\n');
-    var mensaje = '🌿 *Nali Eggui*\n📅 '+fecha+' - '+v.hora+'\n\n'+lineas+'\n'+'--------------------------------\n'+'*Total: $'+v.total.toLocaleString('es-AR')+'* - '+metodoLabel+'\n\n¡Gracias por tu compra! 🙏';
+    var mensaje = '🌿 *' + (document.getElementById('headerTitulo').textContent || PREFIJO) + '*\n📅 '+fecha+' - '+v.hora+'\n\n'+lineas+'\n'+'--------------------------------\n'+'*Total: $'+v.total.toLocaleString('es-AR')+'* - '+metodoLabel+'\n\n¡Gracias por tu compra! 🙏';
     window.open('https://wa.me/?text='+encodeURIComponent(mensaje), '_blank');
 }
 
@@ -1350,7 +1367,7 @@ function programarRecordatorioCierre() {
         const ventas = JSON.parse(localStorage.getItem('nalieggui_ventas_' + hoyKey) || '[]');
         if (!ventas.length) return;
         if (Notification.permission === 'granted') {
-            new Notification('🔒 Nali Eggui', { body: '¡Son las 22:05! Cerrá el día.' });
+            new Notification('🔒 ' + (document.getElementById('headerTitulo').textContent || PREFIJO), { body: '¡Son las 22:05! Cerrá el día.' });
         }
         mostrarToast('🔒 ¡Son las 22:05! Cerrá el día', 'naranja');
     }, ms);
