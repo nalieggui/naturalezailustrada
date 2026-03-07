@@ -577,13 +577,42 @@ body {
 </div>
 
 <!-- BUSCADOR -->
-<div class="buscador-wrap" style="position:relative;">
-    <input type="text" class="buscador-input" id="buscadorInput"
-           placeholder="🔍 Buscar producto..."
-           autocomplete="off" autocorrect="off" autocapitalize="off"
-           oninput="buscarProducto()"
-           style="text-transform:uppercase;">
-    <div id="buscadorResultados" class="buscador-resultados" style="display:none;position:absolute;top:100%;"></div>
+<div class="buscador-wrap" style="position:relative;display:flex;gap:8px;align-items:center;">
+    <div style="position:relative;flex:1;">
+        <input type="text" class="buscador-input" id="buscadorInput"
+               placeholder="🔍 Buscar producto..."
+               autocomplete="off" autocorrect="off" autocapitalize="off"
+               oninput="buscarProducto()"
+               style="text-transform:uppercase;">
+        <div id="buscadorResultados" class="buscador-resultados" style="display:none;position:absolute;top:100%;z-index:50;left:0;right:0;"></div>
+    </div>
+    <button onclick="toggleListaTodos()" id="btnHamburguesa"
+            style="width:42px;height:42px;border:2px solid var(--lavanda-light);border-radius:12px;
+                   background:white;cursor:pointer;font-size:1.1rem;flex-shrink:0;
+                   display:flex;align-items:center;justify-content:center;transition:all 0.2s;">
+        ☰
+    </button>
+    <button onclick="cargarProductos()" id="btnRecargar"
+            style="width:42px;height:42px;border:2px solid var(--lavanda-light);border-radius:12px;
+                   background:white;cursor:pointer;font-size:1rem;flex-shrink:0;
+                   display:flex;align-items:center;justify-content:center;transition:all 0.2s;"
+            title="Recargar productos">
+        🔄
+    </button>
+</div>
+
+<!-- LISTA TODOS LOS PRODUCTOS -->
+<div id="listaTodosWrap" style="display:none;background:white;border:1px solid var(--lavanda-light);
+     border-radius:16px;margin:0 0 8px;max-height:50vh;overflow-y:auto;">
+    <div style="padding:8px 14px;border-bottom:1px solid var(--lavanda-light);
+                display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:0.72rem;font-weight:700;color:var(--gris);text-transform:uppercase;letter-spacing:1px;">
+            Todos los productos
+        </span>
+        <button onclick="toggleListaTodos()"
+                style="border:none;background:none;font-size:1rem;cursor:pointer;color:var(--gris);">✕</button>
+    </div>
+    <div id="listaTodosItems"></div>
 </div>
 
 <!-- VENTA ACTUAL -->
@@ -820,6 +849,8 @@ function mostrarToast(msg, tipo) {
 
 // ========== CARGAR PRODUCTOS ==========
 async function cargarProductos() {
+    const btnR = document.getElementById('btnRecargar');
+    if (btnR) { btnR.textContent = '⏳'; btnR.disabled = true; }
     const ind = document.getElementById('indicadorCarga');
     ind.classList.remove('ok'); ind.classList.add('cargando'); ind.title = 'Cargando...';
     try {
@@ -829,12 +860,69 @@ async function cargarProductos() {
         productos = arr.filter(p => p.name && p.price > 0);
         ind.classList.remove('cargando'); ind.classList.add('ok');
         ind.title = productos.length + ' productos';
+        if (btnR) { btnR.textContent = '🔄'; btnR.disabled = false; }
         renderVenta();
+        if (listaTodosAbierta) renderListaTodos();
     } catch(e) {
         ind.classList.remove('cargando');
         ind.title = 'Error de conexión';
+        if (btnR) { btnR.textContent = '🔄'; btnR.disabled = false; }
         mostrarToast('❌ Error al cargar productos', 'rojo');
     }
+}
+
+// ========== LISTA TODOS (HAMBURGUESA) ==========
+let listaTodosAbierta = false;
+
+function toggleListaTodos() {
+    listaTodosAbierta = !listaTodosAbierta;
+    const wrap = document.getElementById('listaTodosWrap');
+    const btn  = document.getElementById('btnHamburguesa');
+    wrap.style.display = listaTodosAbierta ? 'block' : 'none';
+    btn.style.background    = listaTodosAbierta ? 'var(--lavanda-light)' : 'white';
+    btn.style.borderColor   = listaTodosAbierta ? 'var(--lavanda)' : 'var(--lavanda-light)';
+    if (listaTodosAbierta) renderListaTodos();
+}
+
+function renderListaTodos() {
+    const container = document.getElementById('listaTodosItems');
+    // Agrupar por categoría
+    const cats = {};
+    productos.forEach(p => {
+        const c = p.category || 'GENERAL';
+        if (!cats[c]) cats[c] = [];
+        cats[c].push(p);
+    });
+    let html = '';
+    Object.keys(cats).sort().forEach(cat => {
+        html += '<div style="padding:6px 14px 2px;font-size:0.65rem;font-weight:700;color:var(--lavanda);' +
+                'text-transform:uppercase;letter-spacing:1px;background:var(--lavanda-pale);">' + cat + '</div>';
+        cats[cat].forEach(p => {
+            const sinStock = p.stock === 0;
+            html += '<div onclick="agregarDesdeLista(' + p.id + ')" style="' +
+                'padding:10px 14px;display:flex;justify-content:space-between;align-items:center;' +
+                'border-bottom:1px solid #f0ecf7;cursor:pointer;' +
+                'opacity:' + (sinStock ? '0.45' : '1') + ';' +
+                'background:' + (sinStock ? '#fafafa' : 'white') + ';">' +
+                '<div>' +
+                    '<div style="font-size:0.88rem;font-weight:600;color:var(--texto);">' +
+                        (sinStock ? '❌ ' : '') + p.name +
+                    '</div>' +
+                    '<div style="font-size:0.7rem;color:var(--gris);">Stock: ' + p.stock + '</div>' +
+                '</div>' +
+                '<div style="font-size:0.95rem;font-weight:700;color:var(--lavanda);">$' +
+                    p.price.toLocaleString('es-AR') +
+                '</div></div>';
+        });
+    });
+    container.innerHTML = html || '<div style="padding:20px;text-align:center;color:var(--gris);">Sin productos</div>';
+}
+
+function agregarDesdeLista(id) {
+    agregarProducto(id);
+    // Refrescar para actualizar stock visual
+    renderListaTodos();
+    mostrarToast('✅ Agregado', 'verde');
 }
 
 // ========== BUSCAR PRODUCTO ==========
@@ -1168,13 +1256,9 @@ async function guardarIngreso() {
         const r = await fetch(url, { redirect: 'follow' });
         const resp = await r.json();
         if (resp.success) {
-            // Actualizar local
-            if (productoIngresoSel) {
-                const p = productos.find(pr => pr.id === productoIngresoSel.id);
-                if (p) { p.stock += cantidad; if (venta) p.price = venta; }
-            }
             mostrarToast(resp.nuevo ? '✅ Producto creado' : '📦 Stock actualizado', 'verde');
             cerrarIngreso();
+            cargarProductos(); // recargar lista desde Sheets
         } else { errDiv.textContent = '❌ ' + (resp.error || 'Error'); errDiv.style.display = 'block'; }
     } catch(e) { errDiv.textContent = '❌ Sin conexión'; errDiv.style.display = 'block'; }
     btn.disabled = false; btn.textContent = '📦 Guardar ingreso';
