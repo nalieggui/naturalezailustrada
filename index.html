@@ -121,7 +121,10 @@ body { font-family:'DM Sans',sans-serif; background:var(--blanco); color:var(--t
             <div class="form-fila">
                 <div class="form-grupo">
                     <label class="form-label">Prefijo * (iniciales)</label>
-                    <input type="text" class="form-input" id="nvPrefijo" placeholder="VA" maxlength="3" style="text-transform:uppercase;">
+                    <input type="text" class="form-input" id="nvPrefijo" placeholder="VA" maxlength="3"
+                           style="text-transform:uppercase;"
+                           oninput="validarPrefijo(this.value.trim().toUpperCase())">
+                    <div id="prefijoFeedback" style="margin-top:6px;font-size:0.8rem;display:none;"></div>
                 </div>
                 <div class="form-grupo">
                     <label class="form-label">Categoría</label>
@@ -130,7 +133,8 @@ body { font-family:'DM Sans',sans-serif; background:var(--blanco); color:var(--t
             </div>
             <div class="form-grupo">
                 <label class="form-label">Nombre completo *</label>
-                <input type="text" class="form-input" id="nvNombre" placeholder="Nombre Apellido">
+                <input type="text" class="form-input" id="nvNombre" placeholder="Nombre Apellido"
+                       oninput="validarPrefijo(document.getElementById('nvPrefijo').value.trim().toUpperCase())">
             </div>
             <div class="form-grupo">
                 <label class="form-label">Teléfono</label>
@@ -159,17 +163,92 @@ body { font-family:'DM Sans',sans-serif; background:var(--blanco); color:var(--t
 <script>
 const API_URL = 'https://script.google.com/macros/s/AKfycby9UoS5VbPEroBBrFdFMjakKwQ9sEHBaliO007Fcp42OgZWo3OInsaNpwqkO5cQhE__zg/exec';
 
+let vendedoresCargados = []; // cache para validación en tiempo real
+
 function toast(msg, tipo) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.className = 'toast '+(tipo||'')+' visible';
     clearTimeout(window._t); window._t = setTimeout(()=>t.className='toast', 2500);
 }
 
+// ===== VALIDACIÓN PREFIJO EN TIEMPO REAL =====
+function validarPrefijo(p) {
+    const fb = document.getElementById('prefijoFeedback');
+    const input = document.getElementById('nvPrefijo');
+    if (!p || p.length < 2) { fb.style.display = 'none'; input.style.borderColor = ''; return; }
+
+    const existe = vendedoresCargados.find(v => v.prefijo === p);
+    if (!existe) {
+        fb.innerHTML = '<span style="color:var(--verde);">✅ Disponible</span>';
+        fb.style.display = 'block';
+        input.style.borderColor = 'var(--verde)';
+        return;
+    }
+
+    // Conflicto — generar sugerencias
+    const nombre = document.getElementById('nvNombre').value.trim();
+    const sugerencias = generarSugerencias(p, nombre);
+    const chips = sugerencias.map(s =>
+        `<span onclick="usarSugerencia('${s}')" style="
+            display:inline-block;padding:3px 10px;margin:2px;border-radius:20px;
+            background:var(--lupino-pale);color:var(--lupino);font-weight:700;
+            cursor:pointer;border:1px solid var(--lupino-light);font-size:0.78rem;
+            transition:all 0.15s;" 
+            onmouseover="this.style.background='var(--lupino-light)'"
+            onmouseout="this.style.background='var(--lupino-pale)'">${s}</span>`
+    ).join('');
+
+    fb.innerHTML = `<span style="color:var(--rojo);">⚠️ Ya existe — <b>${existe.nombre}</b></span>
+        <div style="margin-top:5px;">
+            <span style="color:var(--gris);font-size:0.72rem;">Sugerencias: </span>${chips}
+        </div>`;
+    fb.style.display = 'block';
+    input.style.borderColor = 'var(--rojo)';
+}
+
+function generarSugerencias(prefijo, nombreCompleto) {
+    const existentes = new Set(vendedoresCargados.map(v => v.prefijo));
+    const sugs = [];
+
+    // 1. Tercera inicial del apellido si el nombre tiene 2+ palabras
+    if (nombreCompleto) {
+        const partes = nombreCompleto.trim().toUpperCase().split(/\s+/);
+        if (partes.length >= 2) {
+            const tercera = prefijo.slice(0,2) + partes[partes.length-1][0];
+            if (!existentes.has(tercera)) sugs.push(tercera);
+        }
+    }
+
+    // 2. Letras del abecedario al final
+    const letras = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    for (const l of letras) {
+        if (sugs.length >= 3) break;
+        const cand = prefijo.slice(0,2) + l;
+        if (!existentes.has(cand) && !sugs.includes(cand)) sugs.push(cand);
+    }
+
+    // 3. Número al final
+    for (let n = 2; n <= 9; n++) {
+        if (sugs.length >= 4) break;
+        const cand = prefijo.slice(0,2) + n;
+        if (!existentes.has(cand)) sugs.push(cand);
+    }
+
+    return sugs.slice(0, 4);
+}
+
+function usarSugerencia(p) {
+    document.getElementById('nvPrefijo').value = p;
+    validarPrefijo(p);
+}
+
+
 async function cargarVendedores() {
     try {
         const r = await fetch(API_URL + '?action=getVendedores', { redirect:'follow' });
         const data = await r.json();
-        renderVendedores(data.vendedores || []);
+        vendedoresCargados = data.vendedores || [];
+        renderVendedores(vendedoresCargados);
     } catch(e) {
         document.getElementById('listaVendedores').innerHTML = '<div class="loading">❌ Sin conexión</div>';
     }
@@ -221,7 +300,11 @@ function filtrarVendedores() {
 }
 
 function abrirNuevo() { document.getElementById('modalNuevo').classList.add('open'); }
-function cerrarNuevo() { document.getElementById('modalNuevo').classList.remove('open'); }
+function cerrarNuevo() {
+    document.getElementById('modalNuevo').classList.remove('open');
+    document.getElementById('prefijoFeedback').style.display = 'none';
+    document.getElementById('nvPrefijo').style.borderColor = '';
+}
 
 async function guardarNuevo() {
     const prefijo   = document.getElementById('nvPrefijo').value.trim().toUpperCase();

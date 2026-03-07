@@ -1,6 +1,8 @@
 // ===============================
 // VENDEDORES LUPINO — Web App API
-// Columnas VENDEDORES:  A=Prefijo B=Nombre C=Teléfono D=Categoría E=Fecha Alta F=Comision% G=Alias Pago H=Link MP I=Activo J=Notas
+// Columnas VENDEDORES:  A=Prefijo B=Nombre C=Teléfono D=Correo E=Categoría F=Fecha Alta G=Activo H=Comision% I=Alias Pago J=Link MP K=Notas
+// ⚠️  Token MP NO va en Sheets — se guarda en Script Properties (seguro)
+//     Para cargar tokens: ejecutar setTokenMP('PREFIJO', 'APP_USR-...')
 // Columnas INVENTARIO:  A=Código B=Producto C=Stock D=P.Costo E=P.Venta F=Proveedor G=Categoría H=Reservada I=Reservada
 // Columnas VENTAS:      A=Fecha B=Producto C=Cantidad D=P.Venta E=Modo de pago F=Total
 // ===============================
@@ -9,6 +11,71 @@ function doGet(e) {
   const action  = e.parameter.action  || '';
   const prefijo = (e.parameter.prefijo || 'NE').toUpperCase();
   const data    = e.parameter.data ? JSON.parse(decodeURIComponent(e.parameter.data)) : {};
+
+  var result;
+  try {
+    if      (action === 'getVendedores')      { result = getVendedores(); }
+    else if (action === 'crearVendedor')      { result = crearVendedor(data); }
+    else if (action === 'getProductos')       { result = getProductos(prefijo); }
+    else if (action === 'vender')             { result = registrarVenta(data, prefijo); }
+    else if (action === 'ingresarMercaderia') { result = ingresarMercaderia(data, prefijo); }
+    else if (action === 'ajustarStock')       { result = ajustarStock(data, prefijo); }
+    else if (action === 'getEstadisticas')    { result = getEstadisticas(data, prefijo); }
+    else if (action === 'getVentas')          { result = getVentas(prefijo); }
+    else if (action === 'getVentasDiarias')   { result = getVentasDiarias(data, prefijo); }
+    else if (action === 'getTokenMP')         { result = getTokenMP(prefijo); }
+    else                                      { result = { error: 'Acción no reconocida: ' + action }; }
+  } catch (err) {
+    result = { error: err.message };
+  }
+
+  return ContentService
+    .createTextOutput(JSON.stringify(result))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// ===============================
+// GESTIÓN SEGURA DE TOKENS MP
+// Los tokens NUNCA se guardan en Sheets — viven en Script Properties
+// ===============================
+
+// Ejecutar manualmente UNA VEZ desde el editor para cargar el token:
+// setTokenMP('NE', 'APP_USR-...')
+// setTokenMP('VA', 'APP_USR-...')
+function setTokenMP(prefijo, token) {
+  var props = PropertiesService.getScriptProperties();
+  props.setProperty('MP_TOKEN_' + prefijo.toUpperCase(), token);
+  Logger.log('Token guardado para ' + prefijo);
+}
+
+// Eliminar token de un vendedor
+function deleteTokenMP(prefijo) {
+  var props = PropertiesService.getScriptProperties();
+  props.deleteProperty('MP_TOKEN_' + prefijo.toUpperCase());
+  Logger.log('Token eliminado para ' + prefijo);
+}
+
+// Ver qué prefijos tienen token cargado (SIN mostrar el token)
+function listarTokensConfigurados() {
+  var props = PropertiesService.getScriptProperties().getProperties();
+  var configurados = [];
+  for (var key in props) {
+    if (key.startsWith('MP_TOKEN_')) {
+      configurados.push(key.replace('MP_TOKEN_', ''));
+    }
+  }
+  Logger.log('Tokens configurados: ' + configurados.join(', '));
+  return configurados;
+}
+
+// Endpoint que devuelve el token al POS — solo si el prefijo coincide
+// El token sale del servidor cifrado en HTTPS, nunca se guarda en Sheets
+function getTokenMP(prefijo) {
+  var props = PropertiesService.getScriptProperties();
+  var token = props.getProperty('MP_TOKEN_' + prefijo) || '';
+  if (!token) return { token: '', configurado: false };
+  return { token: token, configurado: true };
+}
 
   var result;
   try {
@@ -55,17 +122,20 @@ function getVendedores() {
     var f = datos[i];
     var prefijo = f[0] ? String(f[0]).trim().toUpperCase() : '';
     if (!prefijo) continue;
+    // A=Prefijo B=Nombre C=Teléfono D=Correo E=Categoría F=Fecha Alta G=Activo H=Comision% I=Alias Pago J=Link MP K=Notas
     vendedores.push({
       prefijo:   prefijo,
-      nombre:    String(f[1] || '').trim(),
-      telefono:  String(f[2] || '').trim(),
-      categoria: String(f[3] || '').trim(),
-      fechaAlta: f[4] ? Utilities.formatDate(new Date(f[4]), Session.getScriptTimeZone(), 'dd/MM/yyyy') : '',
-      comision:  parseFloat(f[5]) || 0,
-      aliasPago: String(f[6] || '').trim(),
-      linkMP:    String(f[7] || '').trim(),
-      activo:    String(f[8] || '').trim().toLowerCase() === 'si',
-      notas:     String(f[9] || '').trim()
+      nombre:    String(f[1]  || '').trim(),
+      telefono:  String(f[2]  || '').trim(),
+      correo:    String(f[3]  || '').trim(),
+      categoria: String(f[4]  || '').trim(),
+      fechaAlta: f[5] ? Utilities.formatDate(new Date(f[5]), Session.getScriptTimeZone(), 'dd/MM/yyyy') : '',
+      activo:    String(f[6]  || '').trim().toLowerCase() === 'si',
+      comision:  parseFloat(f[7]) || 0,
+      aliasPago: String(f[8]  || '').trim(),
+      linkMP:    String(f[9]  || '').trim(),
+      notas:     String(f[10] || '').trim()
+      // tokenMP: NUNCA se devuelve desde getVendedores — se pide por separado con getTokenMP
     });
   }
   return { vendedores: vendedores };
@@ -76,10 +146,12 @@ function crearVendedor(data) {
   var prefijo   = (data.prefijo   || '').trim().toUpperCase();
   var nombre    = (data.nombre    || '').trim();
   var telefono  = (data.telefono  || '').trim();
+  var correo    = (data.correo    || '').trim();
   var categoria = (data.categoria || 'GENERAL').trim().toUpperCase();
   var comision  = parseFloat(data.comision) || 0;
   var aliasPago = (data.aliasPago || '').trim();
   var linkMP    = (data.linkMP    || '').trim();
+  var tokenMP   = (data.tokenMP   || '').trim(); // se guarda en Properties, NO en Sheets
 
   if (!prefijo || prefijo.length < 2) return { error: 'Prefijo inválido (mínimo 2 letras)' };
   if (!nombre) return { error: 'Nombre requerido' };
@@ -108,8 +180,17 @@ function crearVendedor(data) {
     hVentas.getRange(1,1,1,6).setFontWeight('bold');
   }
 
+  // Guardar en Sheets SIN el token — columnas: A=Prefijo B=Nombre C=Teléfono D=Correo E=Categoría F=Fecha Alta G=Activo H=Comision% I=Alias Pago J=Link MP K=Notas
   var ultimaFila = hVend.getLastRow() + 1;
-  hVend.getRange(ultimaFila,1,1,10).setValues([[prefijo, nombre, telefono, categoria, new Date(), comision, aliasPago, linkMP, 'si', '']]);
+  hVend.getRange(ultimaFila,1,1,11).setValues([[
+    prefijo, nombre, telefono, correo, categoria,
+    new Date(), 'si', comision, aliasPago, linkMP, ''
+  ]]);
+
+  // Si vino token, guardarlo en Properties (seguro)
+  if (tokenMP) {
+    PropertiesService.getScriptProperties().setProperty('MP_TOKEN_' + prefijo, tokenMP);
+  }
 
   return { success: true, mensaje: '✅ Vendedor ' + nombre + ' (' + prefijo + ') creado', prefijo: prefijo };
 }

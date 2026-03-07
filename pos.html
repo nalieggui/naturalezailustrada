@@ -680,7 +680,7 @@ body {
                     <div id="qrTransfMonto" style="font-size:1.4rem;font-weight:900;color:var(--lavanda-dark);margin-top:10px;"></div>
                     <div style="background:#e8f5e9;border-radius:8px;padding:10px;margin-top:10px;">
                         <div style="font-size:0.72rem;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Alias</div>
-                        <div style="font-size:1.15rem;font-weight:900;color:#1b5e20;letter-spacing:0.5px;">naturalezailustrada</div>
+                        <div id="qrTransfAlias" style="font-size:1.15rem;font-weight:900;color:#1b5e20;letter-spacing:0.5px;">—</div>
                     </div>
                     <div style="font-size:0.78rem;color:#e65100;margin-top:8px;line-height:1.4;">
                         📷 Abrí tu billetera → Transferir → escanear QR
@@ -818,10 +818,30 @@ body {
 // ========== CONFIG ==========
 const API_URL  = 'https://script.google.com/macros/s/AKfycby9UoS5VbPEroBBrFdFMjakKwQ9sEHBaliO007Fcp42OgZWo3OInsaNpwqkO5cQhE__zg/exec';
 const PREFIJO  = new URLSearchParams(window.location.search).get("p")?.toUpperCase() || "NE";
-const MP_ACCESS_TOKEN = 'APP_USR-1352032411392912-030711-550cc8b1c554480540e5fcd3d0aa8d20-30315550';
-const HOY_KEY    = 'nalieggui_ventas_' + new Date().toISOString().slice(0, 10);
-const CARRITO_KEY= 'nalieggui_carrito';
+const HOY_KEY    = 'lupino_ventas_' + PREFIJO + '_' + new Date().toISOString().slice(0, 10);
+const CARRITO_KEY= 'lupino_carrito_' + PREFIJO;
 
+// Datos del vendedor — se cargan desde Sheets, NUNCA hardcodeados
+let vendedorActual = {
+    nombre: PREFIJO, aliasPago: '', linkMP: '', correo: ''
+};
+let mpTokenActual = ''; // se carga desde Script Properties o localStorage
+
+// Cargar token MP de forma segura
+async function cargarTokenMP() {
+    // 1. Intentar desde Script Properties (servidor seguro)
+    try {
+        const r = await fetch(API_URL + '?action=getTokenMP&prefijo=' + PREFIJO, { redirect:'follow' });
+        const d = await r.json();
+        if (d.configurado && d.token) {
+            mpTokenActual = d.token;
+            return;
+        }
+    } catch(e) {}
+    // 2. Fallback: localStorage del dispositivo (configurado por el vendedor)
+    const local = localStorage.getItem('lupino_mp_token_' + PREFIJO);
+    if (local) mpTokenActual = local;
+}
 function colorPorPrefijo(prefijo) {
     const paletas = [
         ['#5a3d8a','#9b7ec8'],['#2d7d5a','#6db890'],['#c45c1a','#f0944a'],
@@ -835,24 +855,31 @@ function colorPorPrefijo(prefijo) {
 
 function irAlInicio() { window.location.href = 'index.html'; }
 
-// Título y avatar provisionales
+// Avatar provisional con color del algoritmo
 document.getElementById('headerTitulo').textContent = PREFIJO;
 document.getElementById('headerAvatar').textContent = PREFIJO;
 document.title = PREFIJO + ' · Punto de Venta';
 const [_c1, _c2] = colorPorPrefijo(PREFIJO);
 document.getElementById('headerAvatar').style.background = `linear-gradient(135deg,${_c1},${_c2})`;
 
-// Cargar nombre real del vendedor
-fetch(API_URL + '?action=getVendedores', { redirect:'follow' })
-    .then(r => r.json())
-    .then(data => {
-        const v = (data.vendedores || []).find(v => v.prefijo === PREFIJO);
-        if (v) {
-            document.getElementById('headerTitulo').textContent = v.nombre;
-            document.getElementById('headerSub').textContent = 'Lupino';
-            document.title = v.nombre + ' · Punto de Venta';
+// Cargar datos reales del vendedor + token MP en paralelo
+Promise.all([
+    fetch(API_URL + '?action=getVendedores', { redirect:'follow' }).then(r => r.json()),
+    cargarTokenMP()
+]).then(([data]) => {
+    const v = (data.vendedores || []).find(v => v.prefijo === PREFIJO);
+    if (v) {
+        vendedorActual = v;
+        document.getElementById('headerTitulo').textContent = v.nombre;
+        document.getElementById('headerSub').textContent = 'Lupino';
+        document.title = v.nombre + ' · Punto de Venta';
+        const qrCanv = document.getElementById('qrTransfCanvas');
+        if (qrCanv && qrCanv.children.length > 0 && v.aliasPago) {
+            qrCanv.innerHTML = '';
+            new QRCode(qrCanv, { text: v.aliasPago, width:180, height:180, colorDark:'#7c5fa8', colorLight:'#ffffff', correctLevel: QRCode.CorrectLevel.M });
         }
-    }).catch(() => {});
+    }
+}).catch(() => {});
 
 
 // ========== ESTADO ==========
@@ -917,29 +944,30 @@ async function generarQRMP(total) {
     const qrDiv  = document.getElementById('qrMP');
     const estado = document.getElementById('qrMPEstado');
 
-    // Si el monto no cambió y ya hay QR, no regenerar
     if (mpQRUltimoTotal === total && qrDiv.children.length > 0) return;
     mpQRUltimoTotal = total;
 
     qrDiv.innerHTML = '<div style="width:180px;height:180px;display:flex;align-items:center;justify-content:center;"><div style="width:32px;height:32px;border:3px solid #009ee3;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></div></div>';
     if (estado) estado.textContent = 'Generando QR...';
 
-    try {
-        // Obtener alias del vendedor actual desde la hoja
-        const vendData = await fetch(API_URL + '?action=getVendedores', { redirect:'follow' }).then(r=>r.json());
-        const vendedor = (vendData.vendedores||[]).find(v => v.prefijo === PREFIJO);
-        const aliasPago = vendedor?.aliasPago || '';
-        const linkMP    = vendedor?.linkMP    || '';
+    // Usar token cargado de forma segura (Properties o localStorage)
+    const tokenMP = mpTokenActual || '';
+    const linkMP  = vendedorActual.linkMP  || '';
+    const alias   = vendedorActual.aliasPago || '';
 
-        // Crear preferencia de pago en MP
-        const descripcion = 'Venta ' + PREFIJO + ' - ' + new Date().toLocaleDateString('es-AR');
+    if (!tokenMP) {
+        // Sin token: fallback a link MP estático del vendedor
+        const fallbackUrl = linkMP || ('https://link.mercadopago.com.ar/' + (alias || PREFIJO.toLowerCase()));
+        qrDiv.innerHTML = '';
+        new QRCode(qrDiv, { text: fallbackUrl, width:180, height:180, colorDark:'#009ee3', colorLight:'#ffffff', correctLevel: QRCode.CorrectLevel.M });
+        if (estado) estado.textContent = '⚠️ QR estático — configurá tu token MP';
+        return;
+    }
+
+    try {
+        const descripcion = 'Venta ' + vendedorActual.nombre + ' - ' + new Date().toLocaleDateString('es-AR');
         const payload = {
-            items: [{
-                title: descripcion,
-                quantity: 1,
-                unit_price: total,
-                currency_id: 'ARS'
-            }],
+            items: [{ title: descripcion, quantity: 1, unit_price: total, currency_id: 'ARS' }],
             payment_methods: { excluded_payment_types: [] },
             back_urls: { success: window.location.href },
             auto_return: 'approved'
@@ -947,41 +975,25 @@ async function generarQRMP(total) {
 
         const resp = await fetch('https://api.mercadopago.com/checkout/preferences', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + MP_ACCESS_TOKEN
-            },
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tokenMP },
             body: JSON.stringify(payload)
         });
         const data = await resp.json();
 
         if (data.id) {
-            // QR apunta al checkout de MP con monto exacto
-            const urlPago = data.init_point;
             qrDiv.innerHTML = '';
-            new QRCode(qrDiv, {
-                text: urlPago,
-                width: 180, height: 180,
-                colorDark: '#009ee3', colorLight: '#ffffff',
-                correctLevel: QRCode.CorrectLevel.M
-            });
+            new QRCode(qrDiv, { text: data.init_point, width:180, height:180, colorDark:'#009ee3', colorLight:'#ffffff', correctLevel: QRCode.CorrectLevel.M });
             if (estado) estado.textContent = '✅ QR listo — $' + total.toLocaleString('es-AR');
         } else {
             throw new Error(data.message || 'Sin ID de preferencia');
         }
     } catch(e) {
-        // Fallback: QR con link de MP del vendedor o link genérico
-        const vendData2 = await fetch(API_URL + '?action=getVendedores', { redirect:'follow' }).then(r=>r.json()).catch(()=>({vendedores:[]}));
-        const vend2 = (vendData2.vendedores||[]).find(v => v.prefijo === PREFIJO);
-        const fallbackUrl = vend2?.linkMP || ('https://link.mercadopago.com.ar/' + (vend2?.aliasPago || PREFIJO.toLowerCase()));
+        // Fallback con link estático del vendedor
+        const fallbackUrl = linkMP || ('https://link.mercadopago.com.ar/' + (alias || PREFIJO.toLowerCase()));
         qrDiv.innerHTML = '';
-        new QRCode(qrDiv, {
-            text: fallbackUrl,
-            width: 180, height: 180,
-            colorDark: '#009ee3', colorLight: '#ffffff',
-            correctLevel: QRCode.CorrectLevel.M
-        });
-        if (estado) estado.textContent = '⚠️ QR estático (verificá conexión)';
+        new QRCode(qrDiv, { text: fallbackUrl, width:180, height:180, colorDark:'#009ee3', colorLight:'#ffffff', correctLevel: QRCode.CorrectLevel.M });
+        if (estado) estado.textContent = '⚠️ QR estático (error API)';
+        console.warn('MP API error:', e.message);
         console.warn('MP API error:', e.message);
     }
 }
@@ -1191,9 +1203,14 @@ function seleccionarMetodo(metodo) {
         panelMP.style.display = 'none';
         panelTransf.style.display = 'block';
         document.getElementById('qrTransfMonto').textContent = '$' + total.toLocaleString('es-AR');
+        const alias = vendedorActual.aliasPago || '';
+        document.getElementById('qrTransfAlias').textContent = alias || '(sin alias configurado)';
         const qrCanv = document.getElementById('qrTransfCanvas');
-        if (qrCanv && qrCanv.children.length === 0) {
-            new QRCode(qrCanv, { text: 'naturalezailustrada', width:180, height:180, colorDark:'#7c5fa8', colorLight:'#ffffff', correctLevel: QRCode.CorrectLevel.M });
+        qrCanv.innerHTML = ''; // siempre regenerar con datos actuales
+        if (alias) {
+            new QRCode(qrCanv, { text: alias, width:180, height:180, colorDark:'#7c5fa8', colorLight:'#ffffff', correctLevel: QRCode.CorrectLevel.M });
+        } else {
+            qrCanv.innerHTML = '<div style="padding:20px;color:#999;font-size:0.8rem;">Sin alias configurado</div>';
         }
     } else {
         panelQR.style.display = 'none';
