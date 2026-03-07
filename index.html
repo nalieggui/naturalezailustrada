@@ -10,18 +10,18 @@
 <style>
 /* ===== VARIABLES ===== */
 :root {
-    --lavanda:      #7c8f42;
-    --lavanda-dark: #5a6b2a;
-    --lavanda-light:#eef2de;
+    --lavanda:      #9b7ec8;
+    --lavanda-dark: #7c5fa8;
+    --lavanda-light:#e8dff5;
     --naranja:      #f07d3a;
     --naranja-dark: #d4622a;
-    --arena:        #f5f0d8;
-    --arena-dark:   #e8e0b8;
-    --blanco:       #fdfcf4;
-    --gris:         #6b6b58;
-    --texto:        #2e3018;
+    --arena:        #f5e6c8;
+    --arena-dark:   #e8d4a8;
+    --blanco:       #fdf9f4;
+    --gris:         #6b6572;
+    --texto:        #3d3244;
     --rojo:         #d64242;
-    --verde:        #5a6b2a;
+    --verde:        #5a9e6f;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -38,7 +38,7 @@ body {
 
 /* ===== HEADER ===== */
 .header {
-    background: linear-gradient(135deg, #3d4e1a 0%, var(--lavanda-dark) 40%, var(--lavanda) 100%);
+    background: linear-gradient(135deg, #5a3d8a 0%, var(--lavanda-dark) 40%, var(--lavanda) 100%);
     padding: 10px 16px;
     display: flex;
     align-items: center;
@@ -103,7 +103,7 @@ body {
 
 /* ===== BARRA HERRAMIENTAS ===== */
 .toolbar {
-    background: #3d4e1a;
+    background: #5a3d8a;
     padding: 8px 12px;
     display: flex;
     gap: 8px;
@@ -280,7 +280,7 @@ body {
 
 /* ===== TOTAL / COBRAR ===== */
 .total-bar {
-    background: linear-gradient(135deg, #3d4e1a, var(--lavanda));
+    background: linear-gradient(135deg, #5a3d8a, var(--lavanda));
     padding: 12px 16px;
     display: flex;
     align-items: center;
@@ -782,9 +782,10 @@ body {
 
 <script>
 // ========== CONFIG ==========
-const API_URL = 'https://script.google.com/macros/s/AKfycbwQBFhcB-fqSdZ_1fExU8fQ8kzXJwYn5KTHJgZrrIYDXNq_MiKkprzcU0imGzU_Xnen7w/exec';
-const HOY_KEY = 'nalieggui_ventas_' + new Date().toISOString().slice(0, 10);
-const CARRITO_KEY = 'nalieggui_carrito';
+const API_URL  = 'https://script.google.com/macros/s/AKfycby9UoS5VbPEroBBrFdFMjakKwQ9sEHBaliO007Fcp42OgZWo3OInsaNpwqkO5cQhE__zg/exec';
+const PREFIJO  = 'NE';
+const HOY_KEY    = 'nalieggui_ventas_' + new Date().toISOString().slice(0, 10);
+const CARRITO_KEY= 'nalieggui_carrito';
 
 // ========== ESTADO ==========
 let productos = [];
@@ -822,7 +823,7 @@ async function cargarProductos() {
     const ind = document.getElementById('indicadorCarga');
     ind.classList.remove('ok'); ind.classList.add('cargando'); ind.title = 'Cargando...';
     try {
-        const r = await fetch(API_URL + '?action=getProductos', { redirect: 'follow' });
+        const r = await fetch(API_URL + '?action=getProductos&prefijo=' + PREFIJO, { redirect: 'follow' });
         const data = await r.json();
         const arr = data.productos || [];
         productos = arr.filter(p => p.name && p.price > 0);
@@ -1008,7 +1009,7 @@ async function confirmarVenta() {
             precioOriginal: i.precioOriginal || 0
         }));
         const payload = { items: ventaData, metodoPago: metodoPagoActual };
-        const url = API_URL + '?action=vender&data=' + encodeURIComponent(JSON.stringify(payload));
+        const url = API_URL + '?action=vender&prefijo=' + PREFIJO + '&data=' + encodeURIComponent(JSON.stringify(payload));
         const r = await fetch(url, { redirect: 'follow' });
         const resp = await r.json();
         stockOk = resp.success === true;
@@ -1163,7 +1164,7 @@ async function guardarIngreso() {
     btn.disabled = true; btn.textContent = '⏳ Guardando...';
     try {
         const payload = { nombre, cantidad, costo, venta, proveedor, categoria };
-        const url = API_URL + '?action=ingresarMercaderia&data=' + encodeURIComponent(JSON.stringify(payload));
+        const url = API_URL + '?action=ingresarMercaderia&prefijo=' + PREFIJO + '&data=' + encodeURIComponent(JSON.stringify(payload));
         const r = await fetch(url, { redirect: 'follow' });
         const resp = await r.json();
         if (resp.success) {
@@ -1238,7 +1239,7 @@ async function guardarAjuste() {
     btn.disabled = true; btn.textContent = '⏳ Guardando...';
     try {
         const payload = { id: ajusteProducto.id, stock: nuevoStock, precio: nuevoPrecio, nombre: nuevoNombre, codigo: nuevoCodigo };
-        const url = API_URL + '?action=ajustarStock&data=' + encodeURIComponent(JSON.stringify(payload));
+        const url = API_URL + '?action=ajustarStock&prefijo=' + PREFIJO + '&data=' + encodeURIComponent(JSON.stringify(payload));
         const r = await fetch(url, { redirect: 'follow' });
         const resp = await r.json();
         if (resp.success) {
@@ -1277,7 +1278,7 @@ async function abrirEstadisticas() {
     document.getElementById('statsContenido').innerHTML =
         '<div style="text-align:center;padding:40px;color:#bbb;"><div style="font-size:2rem;">⏳</div><div>Cargando...</div></div>';
     try {
-        const url = API_URL + '?action=getEstadisticas';
+        const url = API_URL + '?action=getEstadisticas&prefijo=' + PREFIJO;
         const r = await fetch(url, { redirect: 'follow' });
         const data = await r.json();
         renderEstadisticas(data);

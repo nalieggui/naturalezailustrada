@@ -117,7 +117,8 @@ body { font-family:'DM Sans',sans-serif; background:var(--blanco); color:var(--t
 </div>
 
 <script>
-const API_URL = 'https://script.google.com/macros/s/AKfycbwQBFhcB-fqSdZ_1fExU8fQ8kzXJwYn5KTHJgZrrIYDXNq_MiKkprzcU0imGzU_Xnen7w/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycby9UoS5VbPEroBBrFdFMjakKwQ9sEHBaliO007Fcp42OgZWo3OInsaNpwqkO5cQhE__zg/exec';
+const PREFIJO  = 'NE';
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const DIAS_SEM = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 
@@ -129,7 +130,7 @@ let metodosActivos = new Set(['TODOS']);
 
 async function init() {
     try {
-        const r = await fetch(API_URL + '?action=getVentas', { redirect:'follow' });
+        const r = await fetch(API_URL + '?action=getVentas&prefijo=' + PREFIJO, { redirect:'follow' });
         const data = await r.json();
         todasVentas = data.ventas || [];
         diasSeleccionados.add(new Date().toISOString().slice(0,10));
