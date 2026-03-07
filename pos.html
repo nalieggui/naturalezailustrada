@@ -1034,10 +1034,8 @@ function renderListaTodos() {
 }
 
 function agregarDesdeLista(id) {
-    agregarProducto(id);
-    // Refrescar para actualizar stock visual
-    renderListaTodos();
-    mostrarToast('✅ Agregado', 'verde');
+    agregarProducto(id); // ya maneja stock y toast
+    renderListaTodos();  // refresca visual de stock
 }
 
 // ========== BUSCAR PRODUCTO ==========
@@ -1065,9 +1063,16 @@ function agregarProducto(id) {
     if (!p) return;
     document.getElementById('buscadorInput').value = '';
     document.getElementById('buscadorResultados').style.display = 'none';
+
+    // BLOQUEO DURO: sin stock no se puede agregar
+    if (p.stock === 0) {
+        mostrarToast('❌ Sin stock: ' + p.name.substring(0, 25), 'rojo');
+        return;
+    }
+
     const existente = ventaActual.find(i => i.id === id);
     if (existente) {
-        if (existente.qty >= p.stock && p.stock > 0) { mostrarToast('⚠️ Stock máximo: ' + p.stock, 'rojo'); return; }
+        if (existente.qty >= p.stock) { mostrarToast('⚠️ Stock máximo: ' + p.stock, 'rojo'); return; }
         existente.qty++;
     } else {
         ventaActual.push({ id: p.id, name: p.name, price: p.price, qty: 1, stockDisponible: p.stock });
@@ -1114,7 +1119,7 @@ function cambiarQty(id, delta) {
     if (!item) return;
     item.qty = Math.max(1, item.qty + delta);
     const p = productos.find(pr => pr.id === id);
-    if (p && item.qty > p.stock && p.stock > 0) { item.qty = p.stock; mostrarToast('⚠️ Stock máximo: ' + p.stock, 'rojo'); }
+    if (p && item.qty > p.stock) { item.qty = p.stock; mostrarToast('⚠️ Stock máximo: ' + p.stock, 'rojo'); }
     guardarCarrito(); renderVenta();
 }
 
@@ -1203,6 +1208,23 @@ function abrirPointTap() {
 }
 
 async function confirmarVenta() {
+    // VALIDACIÓN FINAL antes de confirmar
+    const sinStock = ventaActual.filter(item => {
+        const p = productos.find(pr => pr.id === item.id);
+        return p && p.stock <= 0;
+    });
+    if (sinStock.length > 0) {
+        mostrarToast('❌ Sin stock: ' + sinStock.map(i => i.name.substring(0,15)).join(', '), 'rojo');
+        // Quitar del carrito los que no tienen stock
+        ventaActual = ventaActual.filter(item => {
+            const p = productos.find(pr => pr.id === item.id);
+            return !p || p.stock > 0;
+        });
+        guardarCarrito();
+        renderVenta();
+        return;
+    }
+
     const btn = document.getElementById('btnOkConfirm');
     btn.disabled = true;
     btn.textContent = '⏳ Procesando...';
