@@ -140,16 +140,17 @@ body {
 .buscador-input {
     width: 100%;
     padding: 10px 16px;
-    border: 2px solid var(--lavanda-light);
+    border: 2px solid var(--naranja);
     border-radius: 50px;
     font-size: 0.95rem;
     font-family: 'DM Sans', sans-serif;
     color: var(--texto);
     outline: none;
-    transition: border-color 0.2s;
-    background: var(--blanco);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fff8f3;
+    box-shadow: 0 2px 8px rgba(240,125,58,0.15);
 }
-.buscador-input:focus { border-color: var(--lavanda); }
+.buscador-input:focus { border-color: var(--naranja-dark); box-shadow: 0 2px 12px rgba(240,125,58,0.3); }
 .buscador-resultados {
     position: absolute;
     left: 0; right: 0;
@@ -621,7 +622,7 @@ body {
         <!-- MÉTODOS DE PAGO -->
         <div class="metodos-pago">
             <button class="btn-metodo activo" id="metodo-efectivo" onclick="seleccionarMetodo('efectivo')">💵 Efectivo</button>
-            <button class="btn-metodo" id="metodo-qr" onclick="seleccionarMetodo('qr')">📱 QR MP</button>
+            <button class="btn-metodo" id="metodo-qr" disabled style="opacity:0.4;cursor:not-allowed;">📱 QR MP</button>
             <button class="btn-metodo" id="metodo-transferencia" onclick="seleccionarMetodo('transferencia')">🏦 Transferencia</button>
             <button class="btn-metodo" id="metodo-debito" onclick="seleccionarMetodo('debito')">💳 Débito</button>
         </div>
@@ -641,16 +642,16 @@ body {
                 </div>
             </div>
             <div id="panelQRTransf" style="display:none;" class="qr-panel">
-                <div style="background:#f0f7ff;border-radius:12px;padding:12px;border:2px solid #bbdefb;">
-                    <div style="font-weight:700;color:#1976d2;font-size:0.82rem;margin-bottom:8px;">🏦 Transferencia</div>
-                    <div id="qrTransfCanvas" style="display:inline-block;background:white;padding:8px;border-radius:8px;"></div>
-                    <div id="qrTransfMonto" style="font-size:1.3rem;font-weight:900;color:var(--lavanda-dark);margin-top:8px;"></div>
-                    <div style="background:#e8f5e9;border-radius:8px;padding:8px;margin-top:8px;">
-                        <div style="font-size:0.7rem;color:#555;text-transform:uppercase;letter-spacing:1px;">Alias</div>
-                        <div style="font-size:1.2rem;font-weight:900;color:#1b5e20;">pago.copihue</div>
+                <div style="background:#f0f7ff;border-radius:12px;padding:16px;border:2px solid #bbdefb;text-align:center;">
+                    <div style="font-weight:700;color:#1976d2;font-size:0.82rem;margin-bottom:10px;">🏦 Transferencia</div>
+                    <div id="qrTransfCanvas" style="display:inline-block;background:white;padding:10px;border-radius:8px;"></div>
+                    <div id="qrTransfMonto" style="font-size:1.4rem;font-weight:900;color:var(--lavanda-dark);margin-top:10px;"></div>
+                    <div style="background:#e8f5e9;border-radius:8px;padding:10px;margin-top:10px;">
+                        <div style="font-size:0.72rem;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Alias</div>
+                        <div style="font-size:1.15rem;font-weight:900;color:#1b5e20;letter-spacing:0.5px;">naturalezailustrada</div>
                     </div>
-                    <div style="font-size:0.72rem;color:#e65100;margin-top:6px;">
-                        📲 Ir a Transferencia → ícono 📷 cámara
+                    <div style="font-size:0.78rem;color:#e65100;margin-top:8px;line-height:1.4;">
+                        📷 Abrí tu billetera → Transferir → escanear QR
                     </div>
                 </div>
             </div>
@@ -978,7 +979,7 @@ function seleccionarMetodo(metodo) {
         document.getElementById('qrTransfMonto').textContent = '$' + total.toLocaleString('es-AR');
         const qrCanv = document.getElementById('qrTransfCanvas');
         if (qrCanv && qrCanv.children.length === 0) {
-            new QRCode(qrCanv, { text: 'pago.copihue', width:160, height:160, colorDark:'#7c5fa8', colorLight:'#ffffff', correctLevel: QRCode.CorrectLevel.M });
+            new QRCode(qrCanv, { text: 'naturalezailustrada', width:180, height:180, colorDark:'#7c5fa8', colorLight:'#ffffff', correctLevel: QRCode.CorrectLevel.M });
         }
     } else {
         panelQR.style.display = 'none';
