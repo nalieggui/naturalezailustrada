@@ -104,10 +104,13 @@ body { font-family:'DM Sans',sans-serif; background:var(--blanco); color:var(--t
 <body>
 
 <div class="header">
-    <img src="logo-nali.jpg" class="header-logo" id="headerLogo" alt="N" onerror="this.style.display='none'">
+    <div id="headerAvatar" style="width:38px;height:38px;border-radius:50%;flex-shrink:0;
+         background:linear-gradient(135deg,rgba(255,255,255,0.2),rgba(255,255,255,0.1));
+         border:2px solid rgba(255,255,255,0.3);display:flex;align-items:center;
+         justify-content:center;font-weight:900;font-size:0.85rem;color:white;">??</div>
     <div>
         <div class="header-titulo" id="headerTitulo">Cargando...</div>
-        <div class="header-sub">Reportes</div>
+        <div class="header-sub">Lupino · Reportes</div>
     </div>
     <a href="#" id="btnVolver" class="btn-volver">← Volver</a>
 </div>
@@ -132,9 +135,21 @@ let metodosActivos = new Set(['TODOS']);
 document.getElementById('btnVolver').onclick = function(e) {
     e.preventDefault(); window.location.href = 'pos.html?p=' + PREFIJO;
 };
-// Título provisional con el prefijo
+// Título provisional
 document.getElementById('headerTitulo').textContent = PREFIJO;
+document.getElementById('headerAvatar').textContent = PREFIJO;
 document.title = PREFIJO + ' · Reportes';
+
+function colorPorPrefijo(prefijo) {
+    const paletas = [
+        ['#5a3d8a','#9b7ec8'],['#2d7d5a','#6db890'],['#c45c1a','#f0944a'],
+        ['#1a5c8a','#5aaad4'],['#8a2d5a','#d47aaa'],['#5a6b1a','#a0b84a'],
+        ['#2d3d8a','#6a7ecb'],['#8a5a1a','#d4a24a'],
+    ];
+    let hash = 0;
+    for (let i = 0; i < prefijo.length; i++) hash += prefijo.charCodeAt(i);
+    return paletas[hash % paletas.length];
+}
 
 async function init() {
     try {
@@ -152,6 +167,10 @@ async function init() {
         if (vendedor) {
             document.getElementById('headerTitulo').textContent = vendedor.nombre;
             document.title = vendedor.nombre + ' · Reportes';
+            const [c1, c2] = colorPorPrefijo(PREFIJO);
+            const av = document.getElementById('headerAvatar');
+            av.style.background = `linear-gradient(135deg,${c1},${c2})`;
+            av.textContent = PREFIJO;
         }
 
         diasSeleccionados.add(new Date().toISOString().slice(0,10));

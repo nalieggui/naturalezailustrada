@@ -175,18 +175,37 @@ async function cargarVendedores() {
     }
 }
 
+function colorPorPrefijo(prefijo) {
+    // Genera colores consistentes a partir del prefijo
+    const paletas = [
+        ['#5a3d8a','#9b7ec8'], // lavanda
+        ['#2d7d5a','#6db890'], // verde
+        ['#c45c1a','#f0944a'], // naranja
+        ['#1a5c8a','#5aaad4'], // azul
+        ['#8a2d5a','#d47aaa'], // rosa
+        ['#5a6b1a','#a0b84a'], // oliva
+        ['#2d3d8a','#6a7ecb'], // índigo
+        ['#8a5a1a','#d4a24a'], // dorado
+    ];
+    let hash = 0;
+    for (let i = 0; i < prefijo.length; i++) hash += prefijo.charCodeAt(i);
+    return paletas[hash % paletas.length];
+}
+
 function renderVendedores(vendedores) {
     const lista = document.getElementById('listaVendedores');
     if (!vendedores.length) { lista.innerHTML = '<div class="loading">Sin vendedores</div>'; return; }
     lista.innerHTML = vendedores.map((v, i) => {
         const esPrueba = v.prefijo === 'XX' || !v.activo;
+        const [c1, c2] = esPrueba ? ['#c8c0d8','#e8dff5'] : colorPorPrefijo(v.prefijo);
+        const avatarStyle = `background:linear-gradient(135deg,${c1},${c2});color:white;`;
         return `<a href="pos.html?p=${v.prefijo}" class="vendedor-card${esPrueba?' prueba':''}"
             data-nombre="${v.nombre.toLowerCase()} ${v.prefijo.toLowerCase()}"
             style="animation-delay:${i*0.08}s">
-            <div class="vendedor-avatar${esPrueba?' prueba-av':''}">${v.prefijo}</div>
+            <div class="vendedor-avatar" style="${avatarStyle}">${v.prefijo}</div>
             <div class="vendedor-info">
                 <div class="vendedor-nombre">${v.nombre}</div>
-                <div class="vendedor-detalle">${v.categoria||'Vendedor'}</div>
+                <div class="vendedor-detalle">Lupino</div>
                 <div class="vendedor-codigo">${v.prefijo}</div>
             </div>
             <div class="vendedor-flecha">›</div>

@@ -551,19 +551,21 @@ body {
 <!-- HEADER -->
 <div class="header">
     <div class="header-logo">
-        <img src="logo-nali.jpg" alt="Logo"
-             style="width:42px;height:42px;border-radius:50%;object-fit:cover;
-                    background:var(--arena);border:2px solid rgba(255,255,255,0.3);"
-             onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-        <div class="header-icon" style="display:none;">🌿</div>
+        <div id="headerAvatar" style="width:42px;height:42px;border-radius:50%;
+             background:linear-gradient(135deg,rgba(255,255,255,0.2),rgba(255,255,255,0.1));
+             border:2px solid rgba(255,255,255,0.3);display:flex;align-items:center;
+             justify-content:center;font-weight:900;font-size:0.95rem;color:white;
+             flex-shrink:0;">??</div>
         <div>
             <div class="header-titulo" id="headerTitulo">Cargando...</div>
-            <div class="header-sub" id="headerSub">Punto de Venta</div>
+            <div class="header-sub" id="headerSub">Lupino</div>
         </div>
     </div>
     <div class="header-right">
         <div class="indicador-carga" id="indicadorCarga" title="Cargando..."></div>
-        <span style="color:rgba(255,255,255,0.8);font-size:0.75rem;font-weight:600;">Nali</span>
+        <button onclick="irAlInicio()" style="background:rgba(255,255,255,0.15);border:none;
+                color:white;border-radius:20px;padding:5px 10px;font-size:0.72rem;
+                font-weight:700;cursor:pointer;font-family:inherit;">🏠</button>
     </div>
 </div>
 
@@ -573,7 +575,7 @@ body {
     <button class="btn-tool ajuste" onclick="abrirAjuste()">✏️ Ajustar</button>
     <button class="btn-tool hoy" onclick="abrirResumen()">📋 Hoy</button>
     <button class="btn-tool stats" onclick="window.location.href='reportes.html?p='+PREFIJO">📊 Reportes</button>
-    <button class="btn-tool cerrar" onclick="cerrarDia()">🔒 Cerrar</button>
+    <button class="btn-tool cerrar" onclick="irAlInicio()">🏠 Inicio</button>
 </div>
 
 <!-- BUSCADOR -->
@@ -760,15 +762,17 @@ body {
             <span class="modal-titulo">✏️ Ajuste rápido</span>
             <button class="modal-cerrar" onclick="cerrarAjuste()">✕</button>
         </div>
-        <div class="form-scroll">
-            <div class="form-grupo">
-                <input type="text" class="form-input" id="ajusteQ"
-                       placeholder="Buscar producto..."
-                       autocomplete="off" oninput="buscarAjuste()"
-                       style="text-transform:uppercase;">
-                <div id="ajusteResultados" style="margin-top:4px;overflow-y:auto;display:none;border:1px solid #e8dff5;border-radius:10px;max-height:45vh;"></div>
-            </div>
-            <div id="ajustePanel" style="display:none;">
+        <!-- Buscador FIJO arriba, nunca scrollea -->
+        <div style="padding:12px 20px 8px;border-bottom:1px solid var(--lavanda-pale);flex-shrink:0;">
+            <input type="text" class="form-input" id="ajusteQ"
+                   placeholder="Buscar producto..."
+                   autocomplete="off" oninput="buscarAjuste()"
+                   style="text-transform:uppercase;">
+        </div>
+        <!-- Todo lo demás scrollea -->
+        <div style="overflow-y:auto;flex:1;min-height:0;padding:0 20px 20px;">
+            <div id="ajusteResultados" style="margin-top:8px;display:none;border:1px solid var(--lavanda-pale);border-radius:10px;overflow:hidden;"></div>
+            <div id="ajustePanel" style="display:none;padding-top:12px;">
                 <div id="ajusteNombre" style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:var(--lavanda-dark);margin-bottom:4px;"></div>
                 <div id="ajusteStockActual" style="font-size:0.82rem;color:var(--gris);margin-bottom:14px;"></div>
                 <div class="form-grupo">
@@ -814,13 +818,29 @@ body {
 // ========== CONFIG ==========
 const API_URL  = 'https://script.google.com/macros/s/AKfycby9UoS5VbPEroBBrFdFMjakKwQ9sEHBaliO007Fcp42OgZWo3OInsaNpwqkO5cQhE__zg/exec';
 const PREFIJO  = new URLSearchParams(window.location.search).get("p")?.toUpperCase() || "NE";
-APP_USR-1352032411392912-030711-550cc8b1c554480540e5fcd3d0aa8d20-30315550 // ← reemplazar con APP_USR-...
+const MP_ACCESS_TOKEN = 'APP_USR-1352032411392912-030711-550cc8b1c554480540e5fcd3d0aa8d20-30315550';
 const HOY_KEY    = 'nalieggui_ventas_' + new Date().toISOString().slice(0, 10);
 const CARRITO_KEY= 'nalieggui_carrito';
 
-// Título provisional
+function colorPorPrefijo(prefijo) {
+    const paletas = [
+        ['#5a3d8a','#9b7ec8'],['#2d7d5a','#6db890'],['#c45c1a','#f0944a'],
+        ['#1a5c8a','#5aaad4'],['#8a2d5a','#d47aaa'],['#5a6b1a','#a0b84a'],
+        ['#2d3d8a','#6a7ecb'],['#8a5a1a','#d4a24a'],
+    ];
+    let hash = 0;
+    for (let i = 0; i < prefijo.length; i++) hash += prefijo.charCodeAt(i);
+    return paletas[hash % paletas.length];
+}
+
+function irAlInicio() { window.location.href = 'index.html'; }
+
+// Título y avatar provisionales
 document.getElementById('headerTitulo').textContent = PREFIJO;
+document.getElementById('headerAvatar').textContent = PREFIJO;
 document.title = PREFIJO + ' · Punto de Venta';
+const [_c1, _c2] = colorPorPrefijo(PREFIJO);
+document.getElementById('headerAvatar').style.background = `linear-gradient(135deg,${_c1},${_c2})`;
 
 // Cargar nombre real del vendedor
 fetch(API_URL + '?action=getVendedores', { redirect:'follow' })
@@ -829,7 +849,7 @@ fetch(API_URL + '?action=getVendedores', { redirect:'follow' })
         const v = (data.vendedores || []).find(v => v.prefijo === PREFIJO);
         if (v) {
             document.getElementById('headerTitulo').textContent = v.nombre;
-            document.getElementById('headerSub').textContent = v.categoria || 'Punto de Venta';
+            document.getElementById('headerSub').textContent = 'Lupino';
             document.title = v.nombre + ' · Punto de Venta';
         }
     }).catch(() => {});
@@ -1274,6 +1294,7 @@ function cerrarDia() {
     localStorage.removeItem(HOY_KEY);
     cerrarResumen();
     mostrarToast('🔒 Día cerrado', 'verde');
+    setTimeout(() => window.location.href = 'index.html', 1200);
 }
 
 // ========== INGRESAR MERCADERÍA ==========
