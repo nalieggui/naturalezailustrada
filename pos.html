@@ -651,7 +651,7 @@ body {
         <!-- MÉTODOS DE PAGO -->
         <div class="metodos-pago">
             <button class="btn-metodo activo" id="metodo-efectivo" onclick="seleccionarMetodo('efectivo')">💵 Efectivo</button>
-            <button class="btn-metodo" id="metodo-qr" disabled style="opacity:0.4;cursor:not-allowed;">📱 QR MP</button>
+            <button class="btn-metodo" id="metodo-qr">📱 QR MP</button>
             <button class="btn-metodo" id="metodo-transferencia" onclick="seleccionarMetodo('transferencia')">🏦 Transferencia</button>
             <button class="btn-metodo" id="metodo-debito" onclick="seleccionarMetodo('debito')">💳 Débito</button>
         </div>
@@ -663,6 +663,7 @@ body {
                     <div style="color:white;font-weight:900;font-size:0.85rem;margin-bottom:8px;">📱 QR Mercado Pago</div>
                     <div style="background:white;border-radius:8px;padding:8px;display:inline-block;" id="qrMP"></div>
                     <div id="qrMontoMP" style="color:white;font-size:1.5rem;font-weight:900;margin-top:8px;"></div>
+                    <div id="qrMPEstado" style="color:rgba(255,255,255,0.75);font-size:0.72rem;margin-top:4px;"></div>
                     <button onclick="abrirPointTap()"
                             style="width:100%;margin-top:8px;padding:10px;border:none;border-radius:10px;
                                    background:white;color:#009ee3;font-weight:900;cursor:pointer;font-size:0.9rem;">
@@ -812,7 +813,8 @@ body {
 <script>
 // ========== CONFIG ==========
 const API_URL  = 'https://script.google.com/macros/s/AKfycby9UoS5VbPEroBBrFdFMjakKwQ9sEHBaliO007Fcp42OgZWo3OInsaNpwqkO5cQhE__zg/exec';
-const PREFIJO = new URLSearchParams(window.location.search).get("p")?.toUpperCase() || "NE";
+const PREFIJO  = new URLSearchParams(window.location.search).get("p")?.toUpperCase() || "NE";
+APP_USR-1352032411392912-030711-550cc8b1c554480540e5fcd3d0aa8d20-30315550 // ← reemplazar con APP_USR-...
 const HOY_KEY    = 'nalieggui_ventas_' + new Date().toISOString().slice(0, 10);
 const CARRITO_KEY= 'nalieggui_carrito';
 
@@ -888,7 +890,83 @@ async function cargarProductos() {
     }
 }
 
-// ========== LISTA TODOS (HAMBURGUESA) ==========
+// ========== QR MERCADO PAGO DINÁMICO ==========
+let mpQRUltimoTotal = null;
+
+async function generarQRMP(total) {
+    const qrDiv  = document.getElementById('qrMP');
+    const estado = document.getElementById('qrMPEstado');
+
+    // Si el monto no cambió y ya hay QR, no regenerar
+    if (mpQRUltimoTotal === total && qrDiv.children.length > 0) return;
+    mpQRUltimoTotal = total;
+
+    qrDiv.innerHTML = '<div style="width:180px;height:180px;display:flex;align-items:center;justify-content:center;"><div style="width:32px;height:32px;border:3px solid #009ee3;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></div></div>';
+    if (estado) estado.textContent = 'Generando QR...';
+
+    try {
+        // Obtener alias del vendedor actual desde la hoja
+        const vendData = await fetch(API_URL + '?action=getVendedores', { redirect:'follow' }).then(r=>r.json());
+        const vendedor = (vendData.vendedores||[]).find(v => v.prefijo === PREFIJO);
+        const aliasPago = vendedor?.aliasPago || '';
+        const linkMP    = vendedor?.linkMP    || '';
+
+        // Crear preferencia de pago en MP
+        const descripcion = 'Venta ' + PREFIJO + ' - ' + new Date().toLocaleDateString('es-AR');
+        const payload = {
+            items: [{
+                title: descripcion,
+                quantity: 1,
+                unit_price: total,
+                currency_id: 'ARS'
+            }],
+            payment_methods: { excluded_payment_types: [] },
+            back_urls: { success: window.location.href },
+            auto_return: 'approved'
+        };
+
+        const resp = await fetch('https://api.mercadopago.com/checkout/preferences', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + MP_ACCESS_TOKEN
+            },
+            body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+
+        if (data.id) {
+            // QR apunta al checkout de MP con monto exacto
+            const urlPago = data.init_point;
+            qrDiv.innerHTML = '';
+            new QRCode(qrDiv, {
+                text: urlPago,
+                width: 180, height: 180,
+                colorDark: '#009ee3', colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.M
+            });
+            if (estado) estado.textContent = '✅ QR listo — $' + total.toLocaleString('es-AR');
+        } else {
+            throw new Error(data.message || 'Sin ID de preferencia');
+        }
+    } catch(e) {
+        // Fallback: QR con link de MP del vendedor o link genérico
+        const vendData2 = await fetch(API_URL + '?action=getVendedores', { redirect:'follow' }).then(r=>r.json()).catch(()=>({vendedores:[]}));
+        const vend2 = (vendData2.vendedores||[]).find(v => v.prefijo === PREFIJO);
+        const fallbackUrl = vend2?.linkMP || ('https://link.mercadopago.com.ar/' + (vend2?.aliasPago || PREFIJO.toLowerCase()));
+        qrDiv.innerHTML = '';
+        new QRCode(qrDiv, {
+            text: fallbackUrl,
+            width: 180, height: 180,
+            colorDark: '#009ee3', colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.M
+        });
+        if (estado) estado.textContent = '⚠️ QR estático (verificá conexión)';
+        console.warn('MP API error:', e.message);
+    }
+}
+
+
 let listaTodosAbierta = false;
 
 function toggleListaTodos() {
@@ -984,6 +1062,14 @@ function renderVenta() {
     const lista = document.getElementById('listaVenta');
     const total = ventaActual.reduce((s, i) => s + i.price * i.qty, 0);
     document.getElementById('totalMonto').textContent = '$' + total.toLocaleString('es-AR');
+
+    // Si el panel MP está visible y el total cambió, regenerar QR
+    const panelMP = document.getElementById('panelQRMP');
+    if (panelMP && panelMP.style.display !== 'none' && mpQRUltimoTotal !== total) {
+        document.getElementById('qrMontoMP').textContent = '$' + total.toLocaleString('es-AR');
+        generarQRMP(total);
+    }
+
     if (!ventaActual.length) {
         lista.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#bbb;"><div style="font-size:2rem;margin-bottom:8px;">🌿</div><div style="font-size:0.9rem;">Buscá un producto para empezar</div></div>';
         return;
@@ -1074,10 +1160,7 @@ function seleccionarMetodo(metodo) {
         panelMP.style.display = 'block';
         panelTransf.style.display = 'none';
         document.getElementById('qrMontoMP').textContent = '$' + total.toLocaleString('es-AR');
-        const qrMP = document.getElementById('qrMP');
-        if (qrMP && qrMP.children.length === 0) {
-            new QRCode(qrMP, { text: 'https://link.mercadopago.com.ar/almacencopihue', width:180, height:180, colorDark:'#009ee3', colorLight:'#ffffff', correctLevel: QRCode.CorrectLevel.M });
-        }
+        generarQRMP(total);
     } else if (metodo === 'transferencia') {
         panelQR.style.display = 'block';
         panelMP.style.display = 'none';
