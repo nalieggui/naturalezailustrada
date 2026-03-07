@@ -350,6 +350,8 @@ body {
     max-width: 480px;
     max-height: 92vh;
     padding-bottom: env(safe-area-inset-bottom);
+    display: flex;
+    flex-direction: column;
 }
 .modal-handle {
     width: 36px; height: 4px;
@@ -612,6 +614,7 @@ body {
             <span class="modal-titulo">✨ Confirmar venta</span>
             <button class="modal-cerrar" onclick="cerrarConfirm()">✕</button>
         </div>
+        <div style="overflow-y:auto;flex:1;min-height:0;">
         <div class="confirm-items" id="confirmItems"></div>
         <div class="confirm-total" id="confirmTotal">$0</div>
 
@@ -652,6 +655,7 @@ body {
                 </div>
             </div>
         </div>
+        </div><!-- fin scroll wrapper -->
 
         <div class="confirm-acciones">
             <button class="btn-cancelar-confirm" onclick="cerrarConfirm()">Cancelar</button>
