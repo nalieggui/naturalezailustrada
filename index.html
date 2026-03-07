@@ -17,249 +17,75 @@
     --blanco:       #fdf9f4;
     --texto:        #3d3244;
     --gris:         #6b6572;
+    --rojo:         #d64242;
+    --verde:        #5a9e6f;
 }
-
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
-body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--blanco);
-    color: var(--texto);
-    min-height: 100dvh;
-    display: flex;
-    flex-direction: column;
-    overflow-x: hidden;
-}
-
-/* ===== FONDO DECORATIVO ===== */
-.bg-deco {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    overflow: hidden;
-}
-.bg-deco::before {
-    content: '';
-    position: absolute;
-    top: -120px; left: -80px;
-    width: 420px; height: 420px;
-    background: radial-gradient(circle, rgba(124,95,168,0.12) 0%, transparent 70%);
-    border-radius: 50%;
-}
-.bg-deco::after {
-    content: '';
-    position: absolute;
-    bottom: -100px; right: -60px;
-    width: 360px; height: 360px;
-    background: radial-gradient(circle, rgba(240,125,58,0.1) 0%, transparent 70%);
-    border-radius: 50%;
-}
-
-/* ===== HEADER ===== */
-.header {
-    position: relative; z-index: 10;
-    background: linear-gradient(135deg, var(--lupino) 0%, var(--lupino-mid) 60%, var(--lupino-light) 100%);
-    padding: 28px 20px 24px;
-    text-align: center;
-    box-shadow: 0 4px 24px rgba(90,61,138,0.3);
-}
-.header-logo-wrap {
-    width: 64px; height: 64px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.15);
-    border: 2px solid rgba(255,255,255,0.3);
-    margin: 0 auto 12px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.8rem;
-    overflow: hidden;
-}
-.header-logo-wrap img {
-    width: 100%; height: 100%; object-fit: cover; border-radius: 50%;
-}
-.header-titulo {
-    font-family: 'Playfair Display', serif;
-    color: white;
-    font-size: 1.6rem;
-    font-weight: 900;
-    letter-spacing: -0.5px;
-    line-height: 1;
-}
-.header-sub {
-    color: rgba(255,255,255,0.7);
-    font-size: 0.72rem;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    margin-top: 4px;
-}
-
-/* ===== CONTENIDO ===== */
-.contenido {
-    position: relative; z-index: 1;
-    flex: 1;
-    padding: 24px 16px 32px;
-    max-width: 480px;
-    margin: 0 auto;
-    width: 100%;
-}
-
-.seccion-label {
-    font-size: 0.68rem;
-    font-weight: 700;
-    color: var(--gris);
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-bottom: 14px;
-    padding-left: 4px;
-}
-
-/* ===== BUSCADOR ===== */
-.buscador-wrap {
-    position: relative;
-    margin-bottom: 20px;
-}
-.buscador-input {
-    width: 100%;
-    padding: 12px 16px 12px 44px;
-    border: 2px solid var(--naranja);
-    border-radius: 50px;
-    font-size: 0.95rem;
-    font-family: 'DM Sans', sans-serif;
-    color: var(--texto);
-    outline: none;
-    background: #fff8f3;
-    box-shadow: 0 2px 10px rgba(240,125,58,0.15);
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-.buscador-input:focus {
-    border-color: var(--naranja-dark);
-    box-shadow: 0 2px 16px rgba(240,125,58,0.3);
-}
-.buscador-icono {
-    position: absolute;
-    left: 16px; top: 50%;
-    transform: translateY(-50%);
-    font-size: 1.1rem;
-    pointer-events: none;
-}
-
-/* ===== GRID VENDEDORES ===== */
-.vendedores-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.vendedor-card {
-    background: white;
-    border-radius: 20px;
-    border: 2px solid var(--lupino-pale);
-    padding: 16px 18px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    cursor: pointer;
-    text-decoration: none;
-    color: inherit;
-    transition: all 0.2s;
-    box-shadow: 0 2px 12px rgba(90,61,138,0.06);
-    animation: slideUp 0.4s ease both;
-}
-.vendedor-card:active {
-    transform: scale(0.97);
-    box-shadow: 0 1px 6px rgba(90,61,138,0.1);
-}
-.vendedor-card:hover {
-    border-color: var(--lupino-mid);
-    box-shadow: 0 4px 20px rgba(90,61,138,0.15);
-    transform: translateY(-1px);
-}
-.vendedor-card.prueba {
-    border-style: dashed;
-    border-color: #d0c8dc;
-    background: #fdfcff;
-}
-.vendedor-card.prueba:hover {
-    border-color: var(--lupino-light);
-    border-style: solid;
-}
-
-@keyframes slideUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-.vendedor-avatar {
-    width: 52px; height: 52px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.4rem;
-    font-weight: 900;
-    overflow: hidden;
-}
-.vendedor-avatar img {
-    width: 100%; height: 100%; object-fit: cover; border-radius: 50%;
-}
-.vendedor-avatar.ne { background: linear-gradient(135deg, var(--lupino), var(--lupino-light)); color: white; }
-.vendedor-avatar.xx { background: var(--lupino-pale); color: var(--lupino-mid); font-size: 1.2rem; }
-
-.vendedor-info { flex: 1; min-width: 0; }
-.vendedor-nombre {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: var(--texto);
-    line-height: 1.2;
-}
-.vendedor-detalle {
-    font-size: 0.75rem;
-    color: var(--gris);
-    margin-top: 2px;
-}
-.vendedor-codigo {
-    font-size: 0.68rem;
-    font-weight: 700;
-    color: var(--lupino-mid);
-    background: var(--lupino-pale);
-    padding: 2px 8px;
-    border-radius: 20px;
-    margin-top: 4px;
-    display: inline-block;
-}
-.vendedor-card.prueba .vendedor-codigo {
-    color: var(--gris);
-    background: #f0ecf7;
-}
-
-.vendedor-flecha {
-    color: var(--lupino-light);
-    font-size: 1.2rem;
-    flex-shrink: 0;
-    transition: transform 0.2s;
-}
-.vendedor-card:hover .vendedor-flecha {
-    transform: translateX(3px);
-    color: var(--lupino-mid);
-}
-
-/* ===== OCULTOS ===== */
-.vendedor-card.oculto { display: none; }
-
-/* ===== FOOTER ===== */
-.footer {
-    position: relative; z-index: 1;
-    text-align: center;
-    padding: 0 20px 24px;
-    color: var(--gris);
-    font-size: 0.7rem;
-    opacity: 0.6;
-}
+* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+body { font-family:'DM Sans',sans-serif; background:var(--blanco); color:var(--texto); min-height:100dvh; display:flex; flex-direction:column; overflow-x:hidden; }
+.bg-deco { position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
+.bg-deco::before { content:''; position:absolute; top:-120px; left:-80px; width:420px; height:420px; background:radial-gradient(circle,rgba(124,95,168,0.12) 0%,transparent 70%); border-radius:50%; }
+.bg-deco::after  { content:''; position:absolute; bottom:-100px; right:-60px; width:360px; height:360px; background:radial-gradient(circle,rgba(240,125,58,0.1) 0%,transparent 70%); border-radius:50%; }
+.header { position:relative; z-index:10; background:linear-gradient(135deg,var(--lupino) 0%,var(--lupino-mid) 60%,var(--lupino-light) 100%); padding:28px 20px 24px; text-align:center; box-shadow:0 4px 24px rgba(90,61,138,0.3); }
+.header-logo-wrap { width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.15); border:2px solid rgba(255,255,255,0.3); margin:0 auto 12px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; overflow:hidden; }
+.header-logo-wrap img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.header-titulo { font-family:'Playfair Display',serif; color:white; font-size:1.6rem; font-weight:900; }
+.header-sub { color:rgba(255,255,255,0.7); font-size:0.72rem; letter-spacing:3px; text-transform:uppercase; margin-top:4px; }
+.contenido { position:relative; z-index:1; flex:1; padding:24px 16px 32px; max-width:480px; margin:0 auto; width:100%; }
+.seccion-label { font-size:0.68rem; font-weight:700; color:var(--gris); text-transform:uppercase; letter-spacing:2px; margin-bottom:14px; padding-left:4px; }
+.buscador-wrap { position:relative; margin-bottom:20px; }
+.buscador-input { width:100%; padding:12px 16px 12px 44px; border:2px solid var(--naranja); border-radius:50px; font-size:0.95rem; font-family:'DM Sans',sans-serif; color:var(--texto); outline:none; background:#fff8f3; box-shadow:0 2px 10px rgba(240,125,58,0.15); transition:border-color 0.2s,box-shadow 0.2s; }
+.buscador-input:focus { border-color:var(--naranja-dark); box-shadow:0 2px 16px rgba(240,125,58,0.3); }
+.buscador-icono { position:absolute; left:16px; top:50%; transform:translateY(-50%); font-size:1.1rem; pointer-events:none; }
+.vendedores-grid { display:flex; flex-direction:column; gap:12px; }
+.vendedor-card { background:white; border-radius:20px; border:2px solid var(--lupino-pale); padding:16px 18px; display:flex; align-items:center; gap:14px; cursor:pointer; text-decoration:none; color:inherit; transition:all 0.2s; box-shadow:0 2px 12px rgba(90,61,138,0.06); animation:slideUp 0.4s ease both; }
+.vendedor-card:active { transform:scale(0.97); }
+.vendedor-card:hover { border-color:var(--lupino-mid); box-shadow:0 4px 20px rgba(90,61,138,0.15); transform:translateY(-1px); }
+.vendedor-card.prueba { border-style:dashed; border-color:#d0c8dc; background:#fdfcff; }
+.vendedor-card.prueba:hover { border-color:var(--lupino-light); border-style:solid; }
+.vendedor-card.oculto { display:none; }
+@keyframes slideUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+.vendedor-avatar { width:52px; height:52px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:1rem; font-weight:900; overflow:hidden; background:linear-gradient(135deg,var(--lupino),var(--lupino-light)); color:white; }
+.vendedor-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.vendedor-avatar.prueba-av { background:var(--lupino-pale); color:var(--lupino-mid); }
+.vendedor-info { flex:1; min-width:0; }
+.vendedor-nombre { font-family:'Playfair Display',serif; font-size:1.05rem; font-weight:700; color:var(--texto); line-height:1.2; }
+.vendedor-detalle { font-size:0.75rem; color:var(--gris); margin-top:2px; }
+.vendedor-codigo { font-size:0.68rem; font-weight:700; color:var(--lupino-mid); background:var(--lupino-pale); padding:2px 8px; border-radius:20px; margin-top:4px; display:inline-block; }
+.vendedor-card.prueba .vendedor-codigo { color:var(--gris); background:#f0ecf7; }
+.vendedor-flecha { color:var(--lupino-light); font-size:1.2rem; flex-shrink:0; transition:transform 0.2s; }
+.vendedor-card:hover .vendedor-flecha { transform:translateX(3px); color:var(--lupino-mid); }
+.btn-nuevo { width:100%; padding:14px; border:2px dashed var(--lupino-pale); border-radius:20px; background:transparent; font-family:'DM Sans',sans-serif; font-size:0.9rem; font-weight:700; color:var(--lupino-mid); cursor:pointer; transition:all 0.2s; margin-top:4px; }
+.btn-nuevo:hover { background:var(--lupino-pale); border-color:var(--lupino-mid); }
+.modal-bg { position:fixed; inset:0; background:rgba(61,50,68,0.5); z-index:200; display:flex; align-items:flex-end; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.25s; }
+.modal-bg.open { opacity:1; pointer-events:all; }
+.modal-sheet { background:white; border-radius:24px 24px 0 0; width:100%; max-width:480px; max-height:92vh; display:flex; flex-direction:column; transform:translateY(100%); transition:transform 0.3s ease; padding-bottom:env(safe-area-inset-bottom); }
+.modal-bg.open .modal-sheet { transform:translateY(0); }
+.modal-handle { width:36px; height:4px; background:#ddd; border-radius:2px; margin:12px auto 4px; }
+.modal-header { padding:8px 20px 12px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--lupino-pale); }
+.modal-titulo { font-family:'Playfair Display',serif; font-size:1.05rem; font-weight:700; color:var(--lupino); }
+.modal-cerrar { background:var(--lupino-pale); border:none; border-radius:50%; width:30px; height:30px; font-size:1rem; cursor:pointer; color:var(--lupino); }
+.form-scroll { padding:16px 20px; overflow-y:auto; flex:1; }
+.form-grupo { margin-bottom:14px; }
+.form-label { font-size:0.72rem; font-weight:700; color:var(--gris); text-transform:uppercase; letter-spacing:1px; display:block; margin-bottom:6px; }
+.form-input { width:100%; padding:10px 14px; border:2px solid var(--lupino-pale); border-radius:12px; font-size:0.95rem; font-family:'DM Sans',sans-serif; color:var(--texto); outline:none; background:white; transition:border-color 0.2s; }
+.form-input:focus { border-color:var(--lupino-mid); }
+.form-fila { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.btn-guardar { width:100%; padding:14px; border:none; border-radius:50px; background:linear-gradient(135deg,var(--lupino),var(--lupino-light)); color:white; font-size:1rem; font-weight:700; cursor:pointer; font-family:inherit; margin-top:8px; }
+.btn-guardar:disabled { opacity:0.6; }
+.form-error { color:var(--rojo); font-size:0.82rem; margin-bottom:10px; display:none; }
+.loading { text-align:center; padding:40px 20px; color:var(--gris); }
+.spinner { width:32px; height:32px; border:3px solid var(--lupino-pale); border-top-color:var(--lupino); border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 10px; }
+@keyframes spin { to{transform:rotate(360deg)} }
+.toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--texto); color:white; padding:10px 20px; border-radius:50px; font-size:0.85rem; font-weight:700; z-index:300; opacity:0; transition:all 0.3s; white-space:nowrap; }
+.toast.visible { opacity:1; transform:translateX(-50%) translateY(0); }
+.toast.verde { background:var(--verde); }
+.toast.rojo  { background:var(--rojo); }
+.footer { position:relative; z-index:1; text-align:center; padding:0 20px 24px; color:var(--gris); font-size:0.7rem; opacity:0.6; }
 </style>
 </head>
 <body>
-
 <div class="bg-deco"></div>
+<div class="toast" id="toast"></div>
 
 <div class="header">
     <div class="header-logo-wrap">
@@ -270,56 +96,148 @@ body {
 </div>
 
 <div class="contenido">
-
     <div class="seccion-label">¿Quién sos?</div>
-
     <div class="buscador-wrap">
         <span class="buscador-icono">🔍</span>
-        <input type="text" class="buscador-input" id="buscador"
-               placeholder="Buscar vendedor..."
-               autocomplete="off" oninput="filtrarVendedores()">
+        <input type="text" class="buscador-input" id="buscador" placeholder="Buscar vendedor..." autocomplete="off" oninput="filtrarVendedores()">
     </div>
-
     <div class="vendedores-grid" id="listaVendedores">
-
-        <a href="ne-index.html" class="vendedor-card" data-nombre="nali eggui nali">
-            <div class="vendedor-avatar ne">
-                <img src="logo-nali.jpg" alt="NE" onerror="this.style.display='none';this.parentElement.textContent='NE'">
-            </div>
-            <div class="vendedor-info">
-                <div class="vendedor-nombre">Nali Eggui</div>
-                <div class="vendedor-detalle">Artesanía & Diseño</div>
-                <div class="vendedor-codigo">NE</div>
-            </div>
-            <div class="vendedor-flecha">›</div>
-        </a>
-
-        <a href="xx-index.html" class="vendedor-card prueba" data-nombre="prueba test xx usuario">
-            <div class="vendedor-avatar xx">🔧</div>
-            <div class="vendedor-info">
-                <div class="vendedor-nombre">Usuario Prueba</div>
-                <div class="vendedor-detalle">Solo para testing</div>
-                <div class="vendedor-codigo">XX</div>
-            </div>
-            <div class="vendedor-flecha">›</div>
-        </a>
-
+        <div class="loading"><div class="spinner"></div><div>Cargando vendedores...</div></div>
     </div>
-
+    <button class="btn-nuevo" onclick="abrirNuevo()" style="margin-top:16px;">➕ Agregar vendedor</button>
 </div>
 
 <div class="footer">Lupino · Sistema de ventas</div>
 
+<!-- MODAL NUEVO VENDEDOR -->
+<div class="modal-bg" id="modalNuevo" onclick="if(event.target===this)cerrarNuevo()">
+    <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+            <span class="modal-titulo">➕ Nuevo vendedor</span>
+            <button class="modal-cerrar" onclick="cerrarNuevo()">✕</button>
+        </div>
+        <div class="form-scroll">
+            <div class="form-fila">
+                <div class="form-grupo">
+                    <label class="form-label">Prefijo * (iniciales)</label>
+                    <input type="text" class="form-input" id="nvPrefijo" placeholder="VA" maxlength="3" style="text-transform:uppercase;">
+                </div>
+                <div class="form-grupo">
+                    <label class="form-label">Categoría</label>
+                    <input type="text" class="form-input" id="nvCategoria" placeholder="Artesanía" style="text-transform:uppercase;">
+                </div>
+            </div>
+            <div class="form-grupo">
+                <label class="form-label">Nombre completo *</label>
+                <input type="text" class="form-input" id="nvNombre" placeholder="Nombre Apellido">
+            </div>
+            <div class="form-grupo">
+                <label class="form-label">Teléfono</label>
+                <input type="text" class="form-input" id="nvTelefono" placeholder="549294...">
+            </div>
+            <div class="form-fila">
+                <div class="form-grupo">
+                    <label class="form-label">Comisión %</label>
+                    <input type="number" class="form-input" id="nvComision" placeholder="0" min="0" max="100">
+                </div>
+                <div class="form-grupo">
+                    <label class="form-label">Alias pago</label>
+                    <input type="text" class="form-input" id="nvAlias" placeholder="alias.mp">
+                </div>
+            </div>
+            <div class="form-grupo">
+                <label class="form-label">Link Mercado Pago</label>
+                <input type="text" class="form-input" id="nvLinkMP" placeholder="https://link.mercadopago.com.ar/...">
+            </div>
+            <div class="form-error" id="nvError"></div>
+            <button class="btn-guardar" id="nvBtn" onclick="guardarNuevo()">✅ Crear vendedor</button>
+        </div>
+    </div>
+</div>
+
 <script>
+const API_URL = 'https://script.google.com/macros/s/AKfycby9UoS5VbPEroBBrFdFMjakKwQ9sEHBaliO007Fcp42OgZWo3OInsaNpwqkO5cQhE__zg/exec';
+
+function toast(msg, tipo) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = 'toast '+(tipo||'')+' visible';
+    clearTimeout(window._t); window._t = setTimeout(()=>t.className='toast', 2500);
+}
+
+async function cargarVendedores() {
+    try {
+        const r = await fetch(API_URL + '?action=getVendedores', { redirect:'follow' });
+        const data = await r.json();
+        renderVendedores(data.vendedores || []);
+    } catch(e) {
+        document.getElementById('listaVendedores').innerHTML = '<div class="loading">❌ Sin conexión</div>';
+    }
+}
+
+function renderVendedores(vendedores) {
+    const lista = document.getElementById('listaVendedores');
+    if (!vendedores.length) { lista.innerHTML = '<div class="loading">Sin vendedores</div>'; return; }
+    lista.innerHTML = vendedores.map((v, i) => {
+        const esPrueba = v.prefijo === 'XX' || !v.activo;
+        return `<a href="pos.html?p=${v.prefijo}" class="vendedor-card${esPrueba?' prueba':''}"
+            data-nombre="${v.nombre.toLowerCase()} ${v.prefijo.toLowerCase()}"
+            style="animation-delay:${i*0.08}s">
+            <div class="vendedor-avatar${esPrueba?' prueba-av':''}">${v.prefijo}</div>
+            <div class="vendedor-info">
+                <div class="vendedor-nombre">${v.nombre}</div>
+                <div class="vendedor-detalle">${v.categoria||'Vendedor'}</div>
+                <div class="vendedor-codigo">${v.prefijo}</div>
+            </div>
+            <div class="vendedor-flecha">›</div>
+        </a>`;
+    }).join('');
+}
+
 function filtrarVendedores() {
     const q = document.getElementById('buscador').value.toLowerCase().trim();
-    const cards = document.querySelectorAll('.vendedor-card');
-    cards.forEach(card => {
-        const nombre = card.getAttribute('data-nombre') || '';
-        card.classList.toggle('oculto', q.length > 0 && !nombre.includes(q));
+    document.querySelectorAll('.vendedor-card').forEach(c => {
+        c.classList.toggle('oculto', q.length > 0 && !(c.dataset.nombre||'').includes(q));
     });
 }
-</script>
 
+function abrirNuevo() { document.getElementById('modalNuevo').classList.add('open'); }
+function cerrarNuevo() { document.getElementById('modalNuevo').classList.remove('open'); }
+
+async function guardarNuevo() {
+    const prefijo   = document.getElementById('nvPrefijo').value.trim().toUpperCase();
+    const nombre    = document.getElementById('nvNombre').value.trim();
+    const telefono  = document.getElementById('nvTelefono').value.trim();
+    const categoria = document.getElementById('nvCategoria').value.trim().toUpperCase()||'GENERAL';
+    const comision  = parseFloat(document.getElementById('nvComision').value)||0;
+    const aliasPago = document.getElementById('nvAlias').value.trim();
+    const linkMP    = document.getElementById('nvLinkMP').value.trim();
+    const errDiv    = document.getElementById('nvError');
+    errDiv.style.display = 'none';
+    if (!prefijo||prefijo.length<2) { errDiv.textContent='⚠️ Prefijo mínimo 2 letras'; errDiv.style.display='block'; return; }
+    if (!nombre) { errDiv.textContent='⚠️ Nombre requerido'; errDiv.style.display='block'; return; }
+    const btn = document.getElementById('nvBtn');
+    btn.disabled=true; btn.textContent='⏳ Creando...';
+    try {
+        const payload = { prefijo, nombre, telefono, categoria, comision, aliasPago, linkMP };
+        const url = API_URL + '?action=crearVendedor&data=' + encodeURIComponent(JSON.stringify(payload));
+        const r = await fetch(url, { redirect:'follow' });
+        const resp = await r.json();
+        if (resp.success) {
+            toast('✅ ' + nombre + ' creado!', 'verde');
+            cerrarNuevo();
+            ['nvPrefijo','nvNombre','nvTelefono','nvCategoria','nvComision','nvAlias','nvLinkMP']
+                .forEach(id => document.getElementById(id).value='');
+            cargarVendedores();
+        } else {
+            errDiv.textContent = '❌ '+(resp.error||'Error');
+            errDiv.style.display = 'block';
+        }
+    } catch(e) { errDiv.textContent='❌ Sin conexión'; errDiv.style.display='block'; }
+    btn.disabled=false; btn.textContent='✅ Crear vendedor';
+}
+
+cargarVendedores();
+</script>
 </body>
 </html>
